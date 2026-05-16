@@ -7,11 +7,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timezone
 
-DATABASE_URL = os.getenv("DATABASE_URL")  # Ex: postgresql://postgres:IMdjzlVgUNOWXKVWGrHPlJXVroOJdwXx@postgres.railway.internal:5432/railway
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL não definida. Adicione no Railway.")
-
+DATABASE_URL = os.getenv("DATABASE_URL")
+# Se a URL começar com postgresql://, substitua por postgresql+psycopg://
+if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
 engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
