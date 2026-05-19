@@ -51,3 +51,32 @@ def cancelar_assinatura(user_id: int) -> bool:
         return False
     finally:
         db.close()
+def criar_assinatura(user_id: int, duracao_dias: int = 30, payment_id: str = None) -> bool:
+    logger.info(f"📝 Criando assinatura para user {user_id}, {duracao_dias} dias")
+    
+    db = SessionLocal()
+    try:
+        # Remove assinatura anterior se existir
+        removidas = db.query(Assinatura).filter(Assinatura.user_id == user_id).delete()
+        if removidas:
+            logger.info(f"Removidas {removidas} assinaturas anteriores para user {user_id}")
+        
+        agora = datetime.now(timezone.utc)
+        nova = Assinatura(
+            user_id=user_id,
+            status="ativa",
+            plano="premium",
+            data_inicio=agora,
+            data_fim=agora + timedelta(days=duracao_dias),
+            payment_id=payment_id
+        )
+        db.add(nova)
+        db.commit()
+        logger.info(f"✅ Assinatura premium criada para user {user_id} até {nova.data_fim}")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Erro ao criar assinatura: {e}")
+        db.rollback()
+        return False
+    finally:
+        db.close()
