@@ -9,36 +9,47 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+@app.route("/webhook/mercadopago", methods=["POST"])
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 MERCADOPAGO_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
 
-def processar_pagamento(payment_id):
-    """Processa o pagamento em segundo plano (não bloqueia o webhook)"""
+def enviar_mensagem_telegram(user_id, texto):
+    """Envia uma mensagem para o usuário no Telegram"""
+    if not TELEGRAM_TOKEN:
+        logger.warning("TELEGRAM_TOKEN não configurado, não será possível notificar o usuário.")
+        return
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {"chat_id": user_id, "text": texto, "parse_mode": "Markdown"}
     try:
-        # Consulta o pagamento na API do Mercado Pago
-        url = f"https://api.mercadopago.com/v1/payments/{payment_id}"
-        headers = {"Authorization": f"Bearer {MERCADOPAGO_TOKEN}"}
-        resp = requests.get(url, headers=headers, timeout=10)
-        
+        resp = requests.post(url, json=payload, timeout=5)
         if resp.status_code != 200:
-            logger.error(f"Erro ao consultar pagamento {payment_id}: {resp.status_code}")
-            return
-        
-        data = resp.json()
-        status = data.get("status")
+            logger.error(f"Erro ao enviar mensagem para {user_id}: {resp.text}")
+    except Exception as e:
+        logger.error(f"Falha ao enviar mensagem: {e}")
+
+def processar_pagamento(payment_id):
+    try:
+        # ... consulta a API do MP como já está ...
         if status == "approved":
-            external_ref = data.get("external_reference")
+            external_ref = ...
             if external_ref and external_ref.startswith("user_"):
                 user_id = int(external_ref.split("_")[1])
-                criar_assinatura(user_id, duracao_dias=30, payment_id=payment_id)
-                logger.info(f"✅ Assinatura ativada para user {user_id}")
-            else:
-                logger.warning(f"external_reference inválido: {external_ref}")
-        else:
-            logger.info(f"Pagamento {payment_id} status: {status}")
+                # Cria a assinatura no banco (agora com BIGINT)
+                if criar_assinatura(user_id, duracao_dias=30, payment_id=payment_id):
+                    logger.info(f"✅ Assinatura ativada para user {user_id}")
+                    # Notifica o usuário
+                    enviar_mensagem_telegram(
+                        user_id,
+                        "🎉 *Pagamento confirmado!*\n\n"
+                        "Seu acesso ao bot foi liberado por 30 dias.\n"
+                        "Use /start para começar a usar todas as funcionalidades."
+                    )
+                else:
+                    logger.error(f"❌ Falha ao ativar assinatura para user {user_id}")
     except Exception as e:
         logger.error(f"Erro no processamento: {e}")
 
-@app.route("/webhook/mercadopago", methods=["POST"])
+
 def mercadopago_webhook():
     # Responde IMEDIATAMENTE para evitar 502
     event = request.json
