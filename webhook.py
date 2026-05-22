@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 MERCADOPAGO_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")  # necessário para notificar o usuário
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN_PROD")  # necessário para notificar o usuário
 
 def enviar_mensagem_telegram(user_id, texto):
     """Envia uma mensagem para o usuário no Telegram"""
