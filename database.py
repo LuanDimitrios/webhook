@@ -20,7 +20,7 @@ class Assinatura(Base):
     __tablename__ = "assinaturas"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, unique=True, nullable=False)
+    user_id = Column(BigInteger, unique=True, nullable=False)
     status = Column(String, default="ativa")  # ativa, expirada, cancelada
     plano = Column(String, default="premium") # basico, premium
     data_inicio = Column(DateTime, default=lambda: datetime.now(timezone.utc))
