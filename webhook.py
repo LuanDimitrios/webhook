@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-@app.route("/webhook/mercadopago", methods=["POST"])
+
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 MERCADOPAGO_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
 
@@ -49,7 +49,7 @@ def processar_pagamento(payment_id):
     except Exception as e:
         logger.error(f"Erro no processamento: {e}")
 
-
+@app.route("/webhook/mercadopago", methods=["POST"])
 def mercadopago_webhook():
     # Responde IMEDIATAMENTE para evitar 502
     event = request.json
